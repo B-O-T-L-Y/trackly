@@ -27,9 +27,7 @@ services:
       context: .
       dockerfile: ./.docker/php/Dockerfile
     environment:
-      MYSQL_DATABASE: trackly_db
-      MYSQL_USER: trackly_user
-      MYSQL_PASSWORD: secret
+      APP_NAME: Trackly
     tty: true
     volumes:
       - ./backend:/var/www/html

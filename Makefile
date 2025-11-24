@@ -8,7 +8,7 @@ down:
 	docker compose down
 
 back:
-	docker compose exec backend
+	docker compose exec backend sh
 
 front:
-	docker compose exec frontend
+	docker compose exec frontend sh
