@@ -1,4 +1,4 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 ARG user
 ARG uid
@@ -20,7 +20,6 @@ RUN apk --no-cache update && apk add --no-cache \
     supervisor
 
 RUN docker-php-ext-configure zip
-RUN #docker-php-ext-install zip pdo_mysql
 RUN docker-php-ext-configure pcntl --enable-pcntl && docker-php-ext-install pcntl;
 
 #RUN pecl install redis
@@ -54,7 +53,7 @@ RUN touch /var/log/supervisor/supervisord.log && \
 COPY --chown=$user:$user ./.docker/php/supervisord.conf /etc/supervisord.conf
 
 # Set permissions for storage and cache
-RUN #chmod -R o+w ./storage ./bootstrap/cache
+RUN chmod -R o+w ./storage ./bootstrap/cache
 
 # Run entrypoints
 ENTRYPOINT ["sh", "./entrypoint.sh"]
