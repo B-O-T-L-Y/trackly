@@ -1,0 +1,140 @@
+{
+	"info": {
+		"_postman_id": "7e80f087-b413-429f-913a-69253cb7b279",
+		"name": "Trackly",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13303412"
+	},
+	"item": [
+		{
+			"name": "Store Event",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const types = [\"page_view\", \"cta_click\", \"form_submit\"];",
+							"const randomType = types[Math.floor(Math.random() * types.length)];",
+							"",
+							"pm.environment.set(\"event_type\", randomType);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Idempotency-Key",
+						"value": "{{idempotency}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"{{event_type}}\",\n  \"ts\": \"{{$isoTimestamp}}\",\n  \"session_id\": \"{{session_id}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/{{api}}/events",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{api}}",
+						"events"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Stats",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"page_view\",\n  \"ts\": \"2025-11-25T10:40:00.000Z\",\n  \"session_id\": \"{{session_id}}\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/{{api}}/stats",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"{{api}}",
+						"stats"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": ""
+		},
+		{
+			"key": "api",
+			"value": ""
+		},
+		{
+			"key": "session_id",
+			"value": ""
+		},
+		{
+			"key": "idempotency",
+			"value": ""
+		},
+		{
+			"key": "token",
+			"value": ""
+		}
+	]
+}
