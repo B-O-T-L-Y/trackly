@@ -43,8 +43,8 @@ services:
   #   networks:
   #     - backend
 
-  node:
-    container_name: node
+  frontend:
+    container_name: frontend
     restart: unless-stopped
     build:
       args:
@@ -53,10 +53,10 @@ services:
       context: .
       dockerfile: ./.docker/node/Dockerfile
     ports:
-      - "5173:5173"
+      - "3000:3000"
     tty: true
     volumes:
-      - ./backend:/var/www/html
+      - ./frontend:/var/www/html
     depends_on:
       - nginx
     networks:
