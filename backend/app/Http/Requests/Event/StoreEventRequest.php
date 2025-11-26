@@ -8,7 +8,7 @@ class StoreEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->header('Authorization') === 'Bearer ' . config('tracking.token');
+        return true;
     }
 
     protected function prepareForValidation(): void
