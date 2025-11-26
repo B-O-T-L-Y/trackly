@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Event\EventStatsResource;
 use App\Services\Event\EventService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 
 class StatsController extends Controller
 {
@@ -12,12 +14,15 @@ class StatsController extends Controller
         protected EventService $eventService
     ) {}
 
-    public function today()
+    public function today(): JsonResponse
     {
         $today = Carbon::now()
             ->timezone(config('tracking.timezone'))
             ->toDateString();
 
-        return response()->json($this->eventService->todayStats($today));
+        $stats = $this->eventService->todayStats($today);
+
+        return new EventStatsResource($stats)
+            ->response();
     }
 }
