@@ -2,7 +2,7 @@
 import type {EventType} from '~/types/events'
 import type {Stats} from "~/types/stats";
 
-const {sendEvent, loading, error: eventError} = useAnalytics()
+const {sendEvent, sending, error: eventError} = useAnalytics()
 const config = useRuntimeConfig()
 
 const {
@@ -10,9 +10,7 @@ const {
   pending: statsPending,
   error: statsFetchError,
   refresh: refreshStats,
-} = await useApiFetch<{ data: Stats }>('/v1/stats/today', {
-  method: 'GET',
-})
+} = await useApiFetch<{ data: Stats }>('/v1/stats/today')
 
 const stats = computed<Stats>(() => statsResponse.value?.data ?? {
   date: '',
@@ -23,6 +21,8 @@ const stats = computed<Stats>(() => statsResponse.value?.data ?? {
   },
   total: 0,
 })
+
+const buttonsDisabled = computed(() => statsPending.value || sending.value)
 
 const statsError = computed<string | null>(() => {
   const err = statsFetchError.value as any
@@ -38,7 +38,7 @@ const handleClick = async (type: EventType) => {
 }
 
 onMounted(() => {
-  const intervalMs = config.public.statsPollInterval * 1000
+  const intervalMs = Number(config.public.statsPollInterval) * 1000
   intervalId = setInterval(() => {
     refreshStats()
   }, intervalMs)
@@ -61,18 +61,19 @@ useHead({
         Press one of the buttons to send an event and view today's statistics.
       </p>
       <div>
-        <button :disabled="statsPending" @click="handleClick('page_view')">
+        <button :disabled="buttonsDisabled" @click="handleClick('page_view')">
           Page View
         </button>
-        <button :disabled="statsPending" @click="handleClick('cta_click')">
+        <button :disabled="buttonsDisabled" @click="handleClick('cta_click')">
           CTA Click
         </button>
-        <button :disabled="statsPending" @click="handleClick('form_submit')">
+        <button :disabled="buttonsDisabled" @click="handleClick('form_submit')">
           Form Submit
         </button>
       </div>
 
       <p v-if="statsPending">Loading stats…</p>
+      <p v-if="sending && !statsPending">Sending event…</p>
       <p v-if="eventError">{{ eventError }}</p>
       <p v-if="statsError">{{ statsError }}</p>
 
@@ -84,6 +85,7 @@ useHead({
           <li>CTA Click: {{ stats.counts.cta_click }}</li>
           <li>Form Submit: {{ stats.counts.form_submit }}</li>
         </ul>
+        <p>Total: {{ stats.total }}</p>
       </section>
       <p>
         Polling every {{ config.public.statsPollInterval }} seconds.

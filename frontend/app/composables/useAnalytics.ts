@@ -23,11 +23,12 @@ function getOrCreateSessionId() {
 }
 
 export function useAnalytics() {
-    const loading = ref(false)
+    const sending = ref(false)
     const error = ref<string | null>(null)
+    const nuxtApp = useNuxtApp()
 
     const sendEvent = async (type: EventType) => {
-        loading.value = true
+        sending.value = true
         error.value = null
 
         const sessionId = getOrCreateSessionId()
@@ -38,7 +39,7 @@ export function useAnalytics() {
                 : Math.random().toString(36).slice(2)
 
         try {
-            await useApiFetch('/v1/events', {
+            await nuxtApp.$api('/v1/events', {
                 method: 'POST',
                 headers: {
                     'X-Idempotency-Key': idempotencyKey,
@@ -47,20 +48,20 @@ export function useAnalytics() {
                     type,
                     ts: new Date().toISOString(),
                     session_id: sessionId,
-                }
+                },
             })
         } catch (e: any) {
             console.error('Failed to send event ', e)
 
             error.value = e?.data?.message || e.message || 'Failed to send event'
         } finally {
-            loading.value = false
+            sending.value = false
         }
     }
 
     return {
         sendEvent,
-        loading,
+        sending,
         error,
     }
 }
