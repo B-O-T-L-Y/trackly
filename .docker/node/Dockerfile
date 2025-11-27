@@ -17,6 +17,6 @@ RUN chown -R $user:$user /var/www/html && chmod -R 755 /var/www/html
 
 USER $user
 
-EXPOSE 5173
+EXPOSE 3000
 
 CMD ["yarn", "dev", "--open"]
