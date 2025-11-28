@@ -25,6 +25,20 @@ const stats = computed<Stats>(() => statsResponse.value?.data ?? {
 
 const buttonsDisabled = computed(() => statsPending.value || sending.value)
 
+const initialStateLoaded = computed(() => Boolean(statsResponse.value))
+
+const statusMessage = computed(() => {
+  if (!initialStateLoaded.value && statsPending.value) {
+    return 'Loading status...'
+  }
+
+  if (sending.value) {
+    return 'Sending event..'
+  }
+
+  return ''
+})
+
 const toastMessage = ref<string | null>(null)
 const toastType = ref<ToastType | null>(null)
 
@@ -126,12 +140,12 @@ useHead({
         </button>
       </div>
 
-      <div class="mb-4">
-        <p v-if="statsPending" class="text-sm text-gray-500 dark:text-gray-400">
-          Loading stats…
-        </p>
-        <p v-if="sending && !statsPending" class="text-sm text-gray-500 dark:text-gray-400">
-          Sending event…
+      <div class="mb-4 h-5 flex items-center">
+        <p
+            :class="statusMessage ? 'opacity-100' : 'opacity-0'"
+            class="text-sm text-gray-500 dark:text-gray-400 transition-opacity duration-150"
+        >
+          {{ statusMessage }}
         </p>
       </div>
 
