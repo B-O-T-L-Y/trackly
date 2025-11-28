@@ -23,7 +23,7 @@ const stats = computed<Stats>(() => statsResponse.value?.data ?? {
   total: 0,
 })
 
-const buttonsDisabled = computed(() => statsPending.value || sending.value)
+const buttonsDisabled = computed(() => sending.value)
 
 const initialStateLoaded = computed(() => Boolean(statsResponse.value))
 
@@ -39,13 +39,18 @@ const statusMessage = computed(() => {
   return ''
 })
 
+const toastTimeoutId = ref<ReturnType<typeof setTimeout> | null>(null)
 const toastMessage = ref<string | null>(null)
 const toastType = ref<ToastType | null>(null)
 
 function showToast(message: string, type: ToastType) {
   toastMessage.value = message
   toastType.value = type
-  setTimeout(() => {
+
+  if (toastTimeoutId.value) clearTimeout(toastTimeoutId.value)
+
+  toastTimeoutId.value = setTimeout(() => {
+    toastTimeoutId.value = null
     toastMessage.value = null
     toastType.value = null
   }, 3000)
@@ -55,14 +60,6 @@ const statsError = computed<string | null>(() => {
   const err = statsFetchError.value as any
   if (!err) return null
   return err?.data?.message || err?.message || 'Failed to fetch stats.'
-})
-
-watch(eventError, (err) => {
-  if (err) showToast(err, 'error')
-})
-
-watch(statsError, (err) => {
-  if (err) showToast(err, 'error')
 })
 
 async function handleClick(type: EventType) {
@@ -80,6 +77,14 @@ async function handleClick(type: EventType) {
   await refreshStats()
 }
 
+watch(eventError, (err) => {
+  if (err) showToast(err, 'error')
+})
+
+watch(statsError, (err) => {
+  if (err) showToast(err, 'error')
+})
+
 let intervalId: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
@@ -90,6 +95,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (intervalId) clearInterval(intervalId)
+  if (toastTimeoutId.value) clearTimeout(toastTimeoutId.value)
 })
 
 useHead({
