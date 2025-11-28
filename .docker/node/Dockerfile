@@ -15,8 +15,12 @@ COPY ./frontend .
 
 RUN chown -R $user:$user /var/www/html && chmod -R 755 /var/www/html
 
+RUN chmod u+x ./entrypoint.sh
+
 USER $user
 
 EXPOSE 3000
+
+ENTRYPOINT ["sh", "./entrypoint.sh"]
 
 CMD ["yarn", "dev", "--open"]
