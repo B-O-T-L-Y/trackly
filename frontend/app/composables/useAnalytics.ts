@@ -39,7 +39,7 @@ export function useAnalytics() {
                 : Math.random().toString(36).slice(2)
 
         try {
-            await nuxtApp.$api('/v1/events', {
+            return await nuxtApp.$api('/v1/events', {
                 method: 'POST',
                 headers: {
                     'X-Idempotency-Key': idempotencyKey,
@@ -53,7 +53,12 @@ export function useAnalytics() {
         } catch (e: any) {
             console.error('Failed to send event ', e)
 
-            error.value = e?.data?.message || e.message || 'Failed to send event'
+            error.value =
+                e?.data?.message ||
+                e.message ||
+                'Failed to send event'
+
+            return null
         } finally {
             sending.value = false
         }

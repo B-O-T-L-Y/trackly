@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {EventType} from '~/types/events'
 import type {Stats} from "~/types/stats";
+import type {ToastType} from "~/types/toast-type";
 
 const {sendEvent, sending, error: eventError} = useAnalytics()
 const config = useRuntimeConfig()
@@ -24,24 +25,53 @@ const stats = computed<Stats>(() => statsResponse.value?.data ?? {
 
 const buttonsDisabled = computed(() => statsPending.value || sending.value)
 
+const toastMessage = ref<string | null>(null)
+const toastType = ref<ToastType | null>(null)
+
+function showToast(message: string, type: ToastType) {
+  toastMessage.value = message
+  toastType.value = type
+  setTimeout(() => {
+    toastMessage.value = null
+    toastType.value = null
+  }, 3000)
+}
+
 const statsError = computed<string | null>(() => {
   const err = statsFetchError.value as any
   if (!err) return null
-  return err?.data?.message || err?.message || 'Failed to fetch stats'
+  return err?.data?.message || err?.message || 'Failed to fetch stats.'
 })
 
-let intervalId: ReturnType<typeof setInterval> | null = null
+watch(eventError, (err) => {
+  if (err) showToast(err, 'error')
+})
 
-const handleClick = async (type: EventType) => {
-  await sendEvent(type)
+watch(statsError, (err) => {
+  if (err) showToast(err, 'error')
+})
+
+async function handleClick(type: EventType) {
+  const result = await sendEvent(type)
+
+  if (!result) return
+
+  const duplicate = result?.duplicate
+
+  showToast(
+      duplicate ? 'Duplicate event ignored.' : 'Event recorded successfully.',
+      'success',
+  )
+
   await refreshStats()
 }
 
+let intervalId: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
-  const intervalMs = Number(config.public.statsPollInterval) * 1000
   intervalId = setInterval(() => {
     refreshStats()
-  }, intervalMs)
+  }, Number(config.public.statsPollInterval) * 1000)
 })
 
 onBeforeUnmount(() => {
@@ -54,6 +84,17 @@ useHead({
 </script>
 
 <template>
+  <div
+      v-if="toastMessage"
+      class="fixed top-4 right-4 z-50 flex items-center w-full max-w-xs p-4 rounded-lg shadow"
+      :class="toastType === 'success'
+      ? 'text-green-800 bg-green-50 dark:text-green-200 dark:bg-green-800'
+      : 'text-red-800 bg-red-50 dark:text-red-200 dark:bg-red-800'"
+      role="alert"
+  >
+    <p class="flex-1 text-sm font-medium">{{ toastMessage }}</p>
+  </div>
+
   <main class="container mx-auto max-w-3xl p-6">
     <section class="bg-white dark:bg-gray-900 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Trackly - Event Tracking Demo</h1>
@@ -63,23 +104,23 @@ useHead({
 
       <div class="flex flex-wrap gap-3 mb-6">
         <button
-          :disabled="buttonsDisabled"
-          @click="handleClick('page_view')"
-          class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            :disabled="buttonsDisabled"
+            @click="handleClick('page_view')"
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
         >
           Page View
         </button>
         <button
-          :disabled="buttonsDisabled"
-          @click="handleClick('cta_click')"
-          class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:focus:ring-indigo-800"
+            :disabled="buttonsDisabled"
+            @click="handleClick('cta_click')"
+            class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:focus:ring-indigo-800"
         >
           CTA Click
         </button>
         <button
-          :disabled="buttonsDisabled"
-          @click="handleClick('form_submit')"
-          class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:focus:ring-emerald-800"
+            :disabled="buttonsDisabled"
+            @click="handleClick('form_submit')"
+            class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:focus:ring-emerald-800"
         >
           Form Submit
         </button>
@@ -92,8 +133,6 @@ useHead({
         <p v-if="sending && !statsPending" class="text-sm text-gray-500 dark:text-gray-400">
           Sending event…
         </p>
-        <p v-if="eventError" class="text-sm text-red-600 dark:text-red-400">{{ eventError }}</p>
-        <p v-if="statsError" class="text-sm text-red-600 dark:text-red-400">{{ statsError }}</p>
       </div>
 
       <section class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
